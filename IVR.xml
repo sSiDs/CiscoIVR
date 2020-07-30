@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<vxml version = "2.1" >
+<var name="DestNumber"/><!-- Variable used to store the destination number -->
+<form id="Start">
+ <block>
+  <prompt bargein="false"><!-- You cannot interrupt this prompt -->
+   <audio src="tftp://10.240.110.110/quickstart/audio/welcome.au"/>
+  </prompt>
+  <goto next="#Main"/><!-- Goto -->
+ </block>
+</form>
+<form id="Main">
+ <field name="getdigit" type="digits?length=1"><!-- Expect one digit to be entered -->
+  <grammar type="application/grammar+regex">[123]</grammar><!-- Expect 1, 2 or 3 as user input -->
+  <noinput><!-- Play the following files if user did not input any digits -->
+   <prompt>
+    <audio src="tftp://10.240.110.110/quickstart/audio/no_input.au"/>
+    <audio src="tftp://10.240.110.110/quickstart/audio/menu_option.au" caching="fast"/>
+   </prompt>
+  </noinput>
+  <nomatch><!-- If you enter wrong digit first time, you will hear short beep -->
+   <prompt bargein="true">
+    <audio src="tftp://10.240.110.110/quickstart/audio/beep.au" caching="fast"/>
+    <audio src="tftp://10.240.110.110/quickstart/audio/menu_option.au" caching="fast"/>
+   </prompt>
+  </nomatch>
+  <prompt bargein="true"><!-- This prompt is interruptable -->
+   <audio src="tftp://10.240.110.110/quickstart/audio/menu_option.au" caching="fast"/>
+  </prompt>
+  <filled> <!-- Right digits were caught -->
+   <if cond="getdigit=='1'">
+    <assign name="DestNumber" expr="'phone://9991'"/>
+    <goto next="#TransferToDestNumber"/>
+   <elseif cond="getdigit=='2'"/>
+    <goto next="#Sub1"/>
+   <elseif cond="getdigit=='3'"/>
+    <prompt bargein="true">
+     <audio src="tftp://10.240.110.110/quickstart/audio/goodbye.au" caching="fast"/>
+    </prompt>
+    <disconnect/>
+   <else/>
+   </if>
+  </filled>
+ </field>
+</form>
+<form id="Sub1">
+ <field name="GetDigits" type="digits?length=1"><!--  RegExp has a high priority as it expect all 4 digits -->
+  <grammar type="application/grammar+regex">[23][0-9][0-9][0-9]</grammar><!-- Expect [23]... as user input -->
+  <noinput><!-- Play the following files if user did not input any digits -->
+   <prompt>
+    <audio src="tftp://10.240.110.110/quickstart/audio/no_input.au"/>
+    <audio src="tftp://10.240.110.110/quickstart/audio/beep.au" caching="fast"/>
+   </prompt>
+  </noinput>
+  <nomatch>
+   <prompt bargein="true">
+    <audio src="tftp://10.240.110.110/quickstart/audio/beep.au" caching="fast"/>
+   </prompt>
+  </nomatch>
+   <prompt bargein="true"><!-- This prompt is interruptable -->
+   <audio src="tftp://10.240.110.110/quickstart/audio/menu_option.au" caching="fast"/>
+  </prompt>
+  <filled> <!-- Right digits were caught -->
+   <assign name="DestNumber" expr="'phone://' + GetDigits"/>
+   <goto next="#TransferToDestNumber"/>
+  </filled>
+ </field>
+</form>
+<form id="TransferToDestNumber">
+ <transfer connecttimeout="20s" name="mycall"  destexpr="DestNumber" bridge="false"> </transfer>
+ <block>
+  <prompt bargein="true">
+   <audio src="tftp://10.240.110.110/quickstart/audio/busy.au" caching="fast"/>
+   <audio src="tftp://10.240.110.110/quickstart/audio/goodbye.au" caching="fast"/>
+  </prompt>
+  <disconnect/>
+ </block>
+</form>
+</vxml>
